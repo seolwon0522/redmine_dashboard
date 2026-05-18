@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend2
+  namespace: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend2
+  template:
+    metadata:
+      labels:
+        app: backend2
+    spec:
+      containers:
+        - name: backend2
+          image: dashboard-backend2:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8010
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8010
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8010
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /app/config.json
+              subPath: config.json
+              readOnly: true
+            - name: runtime-config
+              mountPath: /app/config.runtime.json
+              subPath: config.runtime.json
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: dashboard-config
+        - name: runtime-config
+          secret:
+            secretName: dashboard-runtime-config

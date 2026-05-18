@@ -1,0 +1,82 @@
+services:
+  backend1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: redmine-dashboard-backend1
+    environment:
+      REDMINE_BASE_URL: ${REDMINE_BASE_URL:-}
+      REDMINE_AUTH_TYPE: ${REDMINE_AUTH_TYPE:-api_key}
+      REDMINE_API_KEY: ${REDMINE_API_KEY:-}
+      REDMINE_USERNAME: ${REDMINE_USERNAME:-}
+      REDMINE_PASSWORD: ${REDMINE_PASSWORD:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./config.runtime.json:/app/config.runtime.json
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend2:
+    build:
+      context: .
+      dockerfile: Dockerfile.8010
+    container_name: redmine-dashboard-backend2
+    environment:
+      REDMINE_BASE_URL: ${REDMINE_BASE_URL:-}
+      REDMINE_AUTH_TYPE: ${REDMINE_AUTH_TYPE:-api_key}
+      REDMINE_API_KEY: ${REDMINE_API_KEY:-}
+      REDMINE_USERNAME: ${REDMINE_USERNAME:-}
+      REDMINE_PASSWORD: ${REDMINE_PASSWORD:-}
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./config.runtime.json:/app/config.runtime.json
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        API_BASE_URL: http://backend1:8000
+        WIKI_API_BASE_URL: http://backend2:8010
+    container_name: redmine-dashboard-frontend
+    environment:
+      API_BASE_URL: http://backend1:8000
+      WIKI_API_BASE_URL: http://backend2:8010
+    depends_on:
+      - backend1
+      - backend2
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) process.exit(1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  dashboard-network:
+    driver: bridge

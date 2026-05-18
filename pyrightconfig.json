@@ -1,0 +1,7 @@
+{
+  "venvPath": ".",
+  "venv": ".venv312",
+  "include": [
+    "app"
+  ]
+}

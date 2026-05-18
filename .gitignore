@@ -1,0 +1,76 @@
+# ================================
+# Python / FastAPI 백엔드
+# ================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# 가상환경
+.venv/
+.venv312/
+venv/
+env/
+ENV/
+
+# 환경 변수
+.env
+.env.local
+.env.*.local
+config.runtime.json
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# ================================
+# Next.js / Node.js 프론트엔드
+# ================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.swc/
+frontend/dist/
+
+# Next.js 빌드 캐시
+frontend/.next/cache/
+frontend/tsconfig.tsbuildinfo
+
+# 패키지 잠금 파일은 포함 (선택적)
+# frontend/package-lock.json
+
+# ================================
+# OS 관련
+# ================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ================================
+# IDE / 에디터
+# ================================
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ================================
+# 로그
+# ================================
+*.log
+logs/
+
+# ================================
+# Wiki Export 산출물 / 로컬 환경
+# ================================
+dashboard-images.tar

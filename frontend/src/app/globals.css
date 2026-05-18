@@ -1,0 +1,251 @@
+/* Tailwind CSS 기본 지시어 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 전체 배경색 설정 */
+:root {
+  --app-bg: #f3f6fb;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f7faff;
+  --app-line: #e1e8f0;
+  --app-line-strong: #d2dde9;
+  --app-text: #191f28;
+  --app-text-subtle: #4e5968;
+  --app-text-muted: #8b95a1;
+  --app-primary: #3182f6;
+  --app-primary-soft: #eef6ff;
+}
+
+html {
+  background: var(--app-bg);
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  letter-spacing: -0.012em;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(49, 130, 246, 0.16);
+}
+
+/* ── Issue Rich Content 스타일 ─────────────────────────────────────────────── */
+
+.issue-rich-content {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: #374151;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.issue-rich-content p {
+  margin-bottom: 0.75em;
+}
+
+.issue-rich-content h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.25em;
+}
+
+.issue-rich-content h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: 1.1em;
+  margin-bottom: 0.4em;
+  color: #1f2937;
+}
+
+.issue-rich-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.35em;
+  color: #1f2937;
+}
+
+.issue-rich-content h4,
+.issue-rich-content h5,
+.issue-rich-content h6 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-top: 0.9em;
+  margin-bottom: 0.3em;
+  color: #374151;
+}
+
+.issue-rich-content strong,
+.issue-rich-content b {
+  font-weight: 600;
+  color: #111827;
+}
+
+.issue-rich-content em,
+.issue-rich-content i {
+  font-style: italic;
+}
+
+.issue-rich-content u {
+  text-decoration: underline;
+}
+
+.issue-rich-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.issue-rich-content a:hover {
+  color: #1d4ed8;
+}
+
+/* 목록 */
+.issue-rich-content ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.issue-rich-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.issue-rich-content li {
+  margin-bottom: 0.25em;
+}
+
+.issue-rich-content li > ul,
+.issue-rich-content li > ol {
+  margin-top: 0.25em;
+  margin-bottom: 0;
+}
+
+/* 인용 */
+.issue-rich-content blockquote {
+  border-left: 3px solid #60a5fa;
+  background-color: #eff6ff;
+  padding: 0.5em 0.75em;
+  margin: 0.75em 0;
+  color: #1e40af;
+  border-radius: 0 4px 4px 0;
+}
+
+.issue-rich-content blockquote p {
+  margin-bottom: 0.25em;
+}
+
+/* 코드 */
+.issue-rich-content code {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+  font-size: 0.8em;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  color: #be185d;
+}
+
+.issue-rich-content pre {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  padding: 0.75em 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.75em 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.issue-rich-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* 테이블 */
+.issue-rich-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  display: block;
+}
+
+.issue-rich-content thead {
+  background-color: #f9fafb;
+}
+
+.issue-rich-content th,
+.issue-rich-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.4em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.issue-rich-content th {
+  font-weight: 600;
+  color: #374151;
+  background-color: #f3f4f6;
+}
+
+.issue-rich-content tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* 이미지 */
+.issue-rich-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 0.5em 0;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.15s;
+}
+
+.issue-rich-content img:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 구분선 */
+.issue-rich-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1em 0;
+}
+
+/* 이미지 fallback */
+.issue-rich-img-fallback {
+  background-color: #fef3c7;
+  border: 1px dashed #f59e0b;
+  border-radius: 4px;
+  padding: 0.5em 0.75em;
+  font-size: 0.75rem;
+  color: #92400e;
+  margin: 0.5em 0;
+}
+
+/* ── Journal Note 스타일 ───────────────────────────────────────────────────── */
+
+.issue-history-note .issue-rich-content {
+  font-size: 0.75rem;
+  line-height: 1.6;
+}

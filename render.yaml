@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: dashboard-api
+    runtime: python
+    plan: free
+    region: oregon
+    autoDeployTrigger: commit
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: REDMINE_AUTH_TYPE
+        value: basic
+      - key: REDMINE_BASE_URL
+        value: http://106.255.231.26:6080
+      - key: REDMINE_USERNAME
+        sync: false
+      - key: REDMINE_PASSWORD
+        sync: false

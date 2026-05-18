@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-config
+  namespace: dashboard
+data:
+  config.json: |
+    {
+      "dashboard": {
+        "default_project": "your-project-key",
+        "include_subprojects": false,
+        "cache_ttl_seconds": 300,
+        "status_groups": {
+          "open": [1, 2],
+          "in_progress": [3, 4],
+          "closed": [5, 6, 7]
+        },
+        "overdue_rule": {
+          "field": "due_date",
+          "exclude_status_groups": ["closed"]
+        }
+      }
+    }
