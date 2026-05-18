@@ -131,7 +131,7 @@ export async function fetchProjectWikiExportStatus(jobId: string): Promise<WikiE
   return apiFetch(`/api/v1/wiki-export/jobs/${encodeURIComponent(jobId)}`)
 }
 
-export async function downloadProjectWikiHtml(jobId: string, fallbackProjectId: string): Promise<void> {
+export async function downloadProjectWikiExport(jobId: string, fallbackProjectId: string): Promise<void> {
   const response = await fetch(`/api/v1/wiki-export/jobs/${encodeURIComponent(jobId)}/download`, {
     method: 'GET',
     cache: 'no-store',
@@ -145,7 +145,7 @@ export async function downloadProjectWikiHtml(jobId: string, fallbackProjectId: 
   const url = window.URL.createObjectURL(blob)
   const disposition = response.headers.get('content-disposition') ?? ''
   const encodedFilename = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
-  const fallbackFilename = `${fallbackProjectId}-wiki-export.html`
+  const fallbackFilename = `${fallbackProjectId}-wiki-export.zip`
   const filename = encodedFilename ? decodeURIComponent(encodedFilename) : fallbackFilename
   const anchor = document.createElement('a')
   anchor.href = url

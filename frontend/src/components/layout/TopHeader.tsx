@@ -1,3 +1,4 @@
+import ProjectWikiExportButton from '@/components/layout/ProjectWikiExportButton'
 import ProjectSwitcher from '@/components/ProjectSwitcher'
 
 type TopHeaderProps = {
@@ -19,7 +20,8 @@ export function TopHeader({
       </div>
 
       {projectId ? (
-        <div className="flex shrink-0 items-center justify-end">
+        <div className="flex shrink-0 flex-col items-stretch justify-end gap-2 sm:flex-row sm:items-center">
+          <ProjectWikiExportButton projectId={projectId} />
           <ProjectSwitcher currentProjectId={projectId} />
         </div>
       ) : null}

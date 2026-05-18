@@ -27,6 +27,8 @@ class ExportJob:
     step: str = "작업 대기 중"
     logs: list[str] = field(default_factory=list)
     output_path: str | None = None
+    output_filename: str | None = None
+    output_media_type: str | None = None
     output_size_bytes: int | None = None
     error: str | None = None
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -67,17 +69,27 @@ class ExportJobStore:
             self._jobs[job.id] = job
             return job
 
-    def save_output_html(self, job_id: str, project_key: str, html: str) -> tuple[str, int]:
+    def save_output_file(
+        self,
+        job_id: str,
+        project_key: str,
+        file_bytes: bytes,
+        output_filename: str,
+        output_media_type: str,
+    ) -> tuple[str, int]:
         safe_project_key = re.sub(r"[^A-Za-z0-9._-]+", "_", project_key).strip("_") or "project"
-        file_path = self._output_dir / f"{safe_project_key}-{job_id}.html"
+        suffix = Path(output_filename).suffix or ".bin"
+        file_path = self._output_dir / f"{safe_project_key}-{job_id}{suffix}"
 
-        file_path.write_text(html, encoding="utf-8")
+        file_path.write_bytes(file_bytes)
         size_bytes = file_path.stat().st_size
 
         with self._lock:
             job = self._jobs.get(job_id)
             if job is not None:
                 job.output_path = str(file_path)
+                job.output_filename = output_filename
+                job.output_media_type = output_media_type
                 job.output_size_bytes = size_bytes
                 job.updated_at = datetime.now().isoformat()
 

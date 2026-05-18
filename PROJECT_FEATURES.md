@@ -186,14 +186,14 @@
 
 - `GET /api/v1/dashboard/assets`
 
-## 10. 위키 HTML export
+## 10. 위키 오프라인 export
 
 지원 기능:
 
-- Redmine Wiki를 단일 HTML 파일로 export
+- Redmine Wiki를 오프라인용 HTML + assets ZIP으로 export
 - 작업 생성 후 백그라운드 비동기 처리
 - 진행률/로그/완료 상태 조회
-- 완료 후 HTML 다운로드
+- 완료 후 ZIP 다운로드
 
 관련 파일:
 

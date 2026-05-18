@@ -1,4 +1,4 @@
-"""위키 HTML export 엔드포인트."""
+"""위키 오프라인 export 엔드포인트."""
 
 from __future__ import annotations
 
@@ -61,12 +61,18 @@ async def _run_export_job(request_app, job_id: str) -> None:
     _append_job_log(job, "위키 export 작업을 시작했습니다.", progress=2, step="초기화")
 
     try:
-        html = await service.export_project_wiki_html(
+        bundle = await service.export_project_wiki_bundle(
             job.project_key,
             on_progress=lambda message, progress=None, step=None: _append_job_log(job, message, progress, step),
         )
-        output_path, output_size_bytes = store.save_output_html(job.id, job.project_key, html)
-        del html
+        output_path, output_size_bytes = store.save_output_file(
+            job.id,
+            job.project_key,
+            bundle.content,
+            bundle.filename,
+            bundle.media_type,
+        )
+        del bundle
 
         job.state = "completed"
         job.finished_at = datetime.now().isoformat()
@@ -79,7 +85,7 @@ async def _run_export_job(request_app, job_id: str) -> None:
             output_path,
             output_size_bytes,
         )
-        _append_job_log(job, "HTML 파일 생성이 완료되었습니다. 다운로드를 준비합니다.", progress=100, step="완료")
+        _append_job_log(job, "오프라인 ZIP 번들 생성이 완료되었습니다. 다운로드를 준비합니다.", progress=100, step="완료")
     except Exception as exc:
         logger.exception("wiki export job failed: %s", job.project_key)
         job.state = "failed"
@@ -140,13 +146,13 @@ async def download_export_result(request: Request, job_id: str):
     if not Path(job.output_path).exists():
         raise HTTPException(status_code=410, detail="Wiki export result file was expired or removed.")
 
-    filename = f"{job.project_key}-wiki-export.html"
+    filename = job.output_filename or f"{job.project_key}-wiki-export.zip"
     quoted_filename = quote(filename)
     job.downloaded = True
     _append_job_log(job, "다운로드 요청을 처리했습니다.")
 
     return FileResponse(
         path=job.output_path,
-        media_type="text/html; charset=utf-8",
+        media_type=job.output_media_type or "application/octet-stream",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quoted_filename}"},
     )

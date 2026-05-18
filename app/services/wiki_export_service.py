@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import base64
+import io
 import mimetypes
 import re
+from pathlib import Path
+from zipfile import ZIP_DEFLATED, ZipFile
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -27,16 +29,31 @@ class WikiPageNode:
     children: list["WikiPageNode"] = field(default_factory=list)
 
 
+@dataclass
+class WikiExportAsset:
+    relative_path: str
+    content: bytes
+
+
+@dataclass
+class WikiExportBundle:
+    filename: str
+    media_type: str
+    content: bytes
+
+
 class WikiExportService:
     def __init__(self, client: RedmineClient):
         self._client = client
 
-    async def export_project_wiki_html(self, project_key: str, on_progress=None) -> str:
+    async def export_project_wiki_bundle(self, project_key: str, on_progress=None) -> WikiExportBundle:
         self._emit_progress(on_progress, "위키 목차 페이지를 불러오는 중입니다.", progress=5, step="목차 수집")
         toc_html = await self._client.fetch_html_page(f"/projects/{project_key}/wiki")
         toc_tree, links = self._parse_toc_links(toc_html)
         self._emit_progress(on_progress, f"목차에서 {len(links)}개 문서를 찾았습니다.", progress=12, step="목차 분석")
 
+        assets: dict[str, WikiExportAsset] = {}
+        used_asset_paths: set[str] = set()
         pages: list[dict[str, Any]] = []
         total = len(links)
         for index, link in enumerate(links, start=1):
@@ -49,7 +66,7 @@ class WikiExportService:
             )
             page_html = await self._client.fetch_html_page(link.url, absolute_url=True)
             content_html = self._extract_wiki_content(page_html)
-            content_html = await self._inline_images(content_html)
+            content_html = await self._localize_images(content_html, assets, used_asset_paths)
             content_html = self._rewrite_wiki_links(content_html, links)
             pages.append(
                 {
@@ -60,8 +77,9 @@ class WikiExportService:
                 }
             )
 
-        self._emit_progress(on_progress, "단일 HTML 파일로 병합하는 중입니다.", progress=92, step="HTML 생성")
-        return self._generate_merged_html(project_key, toc_tree, pages)
+        self._emit_progress(on_progress, "오프라인 HTML 번들을 생성하는 중입니다.", progress=92, step="번들 생성")
+        merged_html = self._generate_merged_html(project_key, toc_tree, pages)
+        return self._build_bundle(project_key, merged_html, assets)
 
     def _emit_progress(self, callback, message: str, progress: int | None = None, step: str | None = None) -> None:
         if callback is None:
@@ -143,12 +161,17 @@ class WikiExportService:
         anchor = re.sub(r"-+", "-", anchor).strip(" -").lower().replace(" ", "-")
         return f"page-{anchor}" if anchor else "page-unknown"
 
-    async def _inline_images(self, html_content: str) -> str:
+    async def _localize_images(
+        self,
+        html_content: str,
+        assets: dict[str, WikiExportAsset],
+        used_asset_paths: set[str],
+    ) -> str:
         soup = BeautifulSoup(html_content, "html.parser")
 
         for img in soup.find_all("img", src=True):
             src = img.get("src")
-            if not src:
+            if not src or src.startswith("data:"):
                 continue
 
             absolute_url = src if src.startswith("http") else urljoin(self._client.base_url, src)
@@ -157,15 +180,39 @@ class WikiExportService:
             except Exception:
                 continue
 
-            mime_type = asset.headers.get("content-type", "").split(";")[0].strip()
-            if not mime_type:
-                guessed, _ = mimetypes.guess_type(urlparse(absolute_url).path)
-                mime_type = guessed or "application/octet-stream"
+            cached_asset = assets.get(absolute_url)
+            if cached_asset is None:
+                relative_path = self._build_asset_path(absolute_url, asset.headers.get("content-type"), used_asset_paths)
+                cached_asset = WikiExportAsset(relative_path=relative_path, content=asset.content)
+                assets[absolute_url] = cached_asset
 
-            encoded = base64.b64encode(asset.content).decode("ascii")
-            img["src"] = f"data:{mime_type};base64,{encoded}"
+            img["src"] = cached_asset.relative_path
 
         return str(soup)
+
+    def _build_asset_path(self, absolute_url: str, content_type: str | None, used_asset_paths: set[str]) -> str:
+        parsed_path = Path(unquote(urlparse(absolute_url).path))
+        stem = self._sanitize_filename(parsed_path.stem or "image")
+        suffix = parsed_path.suffix.lower()
+        mime_type = (content_type or "").split(";")[0].strip()
+        if not suffix:
+            guessed_suffix = mimetypes.guess_extension(mime_type or "") or ""
+            suffix = guessed_suffix.lower()
+        if not suffix:
+            suffix = ".bin"
+
+        candidate = f"assets/{stem}{suffix}"
+        index = 2
+        while candidate in used_asset_paths:
+            candidate = f"assets/{stem}-{index}{suffix}"
+            index += 1
+
+        used_asset_paths.add(candidate)
+        return candidate
+
+    def _sanitize_filename(self, value: str) -> str:
+        sanitized = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-._")
+        return sanitized or "image"
 
     def _rewrite_wiki_links(self, html_content: str, all_links: list[WikiPageNode]) -> str:
         soup = BeautifulSoup(html_content, "html.parser")
@@ -277,6 +324,23 @@ class WikiExportService:
   </main>
 </body>
 </html>"""
+
+    def _build_bundle(self, project_key: str, merged_html: str, assets: dict[str, WikiExportAsset]) -> WikiExportBundle:
+        safe_project_key = self._sanitize_filename(project_key) or "project"
+        html_filename = f"{safe_project_key}-wiki-export.html"
+        zip_filename = f"{safe_project_key}-wiki-export.zip"
+
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w", compression=ZIP_DEFLATED) as archive:
+            archive.writestr(html_filename, merged_html)
+            for asset in sorted(assets.values(), key=lambda item: item.relative_path):
+                archive.writestr(asset.relative_path, asset.content)
+
+        return WikiExportBundle(
+            filename=zip_filename,
+            media_type="application/zip",
+            content=buffer.getvalue(),
+        )
 
     def _build_toc_html(self, nodes: list[WikiPageNode]) -> str:
         if not nodes:
